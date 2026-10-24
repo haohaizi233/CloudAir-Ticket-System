@@ -9,13 +9,47 @@ App({
       console.error('请使用 2.2.3 或以上的基础库以使用云能力')
     } else {
       wx.cloud.init({
-        dev:"cloud1-3gejz5a4a2a8e91a",
+        env: "cloud1-3gejz5a4a2a8e91a",
         traceUser: true,
       })
     }
-    this.globalData = {}
+    this.globalData = { isOnline: true }
+
+    // 监听网络状态变化
+    wx.onNetworkStatusChange((res) => {
+      this.globalData.isOnline = res.isConnected
+      if (!res.isConnected) {
+        wx.showToast({ title: '网络已断开', icon: 'none', duration: 3000 })
+      } else {
+        wx.showToast({ title: '网络已恢复', icon: 'success', duration: 1500 })
+      }
+    })
+
+    // 启动时检查一次网络
+    wx.getNetworkType({
+      success: (res) => {
+        this.globalData.isOnline = res.networkType !== 'none'
+        if (res.networkType === 'none') {
+          wx.showToast({ title: '当前无网络连接', icon: 'none', duration: 3000 })
+        }
+      }
+    })
+
     //this.generateMassData()
     //this.smartFixSeats()
+  },
+
+  onError(err) {
+    console.error('全局错误:', err)
+    // 记录到本地，最多保留20条
+    try {
+      let errors = wx.getStorageSync('appErrors') || []
+      errors.unshift({ time: new Date().toISOString(), msg: String(err).substring(0, 200) })
+      if (errors.length > 20) errors = errors.slice(0, 20)
+      wx.setStorageSync('appErrors', errors)
+    } catch (e) {
+      // 忽略存储错误
+    }
   },
   generateMassData() {
     const db = wx.cloud.database()

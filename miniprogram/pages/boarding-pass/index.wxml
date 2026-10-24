@@ -1,11 +1,19 @@
 <view class="container">
   <view class="bg-header">
+    <view class="back-icon" bindtap="onGoBack">←</view>
     <view class="title">云端航空</view>
   </view>
 
   <view class="ticket-card">
     <view class="card-title">电子登机牌</view>
     <view class="divider-line"></view>
+
+    <!-- 倒计时提醒 -->
+    <view class="countdown-bar {{countdownStatus}}" wx:if="{{countdown && !isRefunded}}">
+      <text class="countdown-icon">{{countdownStatus === 'urgent' ? '⏰' : '🕐'}}</text>
+      <text class="countdown-label">距出发：</text>
+      <text class="countdown-value">{{countdown}}</text>
+    </view>
 
     <view class="flight-row">
       <view class="city-col">
@@ -14,6 +22,7 @@
       <view class="icon-col">
         <text class="plane-emoji">✈️</text>
         <text class="flight-no">{{order.flight_info.flight_no}}</text>
+        <text class="duration-text" wx:if="{{flightDuration}}">{{flightDuration}}</text>
       </view>
       <view class="city-col">
         <text class="city">{{order.flight_info.dest}}</text>
@@ -42,13 +51,94 @@
       <view class="inner-divider"></view>
 
       <view class="row-bottom">
-        <text class="label">登机时间</text>
-        <text class="big-time">{{myTime}}</text>
+        <view class="time-pair">
+          <view class="time-col-detail">
+            <text class="label">出发</text>
+            <text class="big-time">{{myTime}}</text>
+            <text class="date-small">{{myDate}}</text>
+          </view>
+          <view class="time-divider-icon">✈</view>
+          <view class="time-col-detail">
+            <text class="label">到达</text>
+            <text class="big-time">{{myArrTime}}</text>
+            <text class="date-small">{{myDate}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="inner-divider"></view>
+
+      <view class="row-price">
+        <view class="col-item">
+          <text class="label">机型</text>
+          <text class="value-text">{{order.flight_info.plane_type || '未知'}}</text>
+        </view>
+        <view class="col-item">
+          <text class="label">登机口</text>
+          <text class="gate-value">{{gateInfo}}</text>
+        </view>
+        <view class="col-item">
+          <text class="label">行李转盘</text>
+          <text class="carousel-value">{{carouselInfo}}</text>
+        </view>
+        <view class="col-item">
+          <text class="label">票价</text>
+          <text class="price-value">¥{{order.price}}</text>
+        </view>
+        <view class="col-item">
+          <text class="label">订单状态</text>
+          <text class="value-text {{isRefunded ? 'refunded-text' : 'paid-text'}}">{{isRefunded ? '已退票' : '已支付'}}</text>
+        </view>
       </view>
     </view>
 
-    <view class="qr-area">
-    <view class="loading-box" wx:if="{{isQrLoading}}">
+    <!-- 天气提示 -->
+    <view class="weather-section" wx:if="{{originWeather || destWeather}}">
+      <view class="weather-card" wx:if="{{originWeather}}">
+        <text class="weather-city">{{originWeather.city}}</text>
+        <text class="weather-icon">{{originWeather.icon}}</text>
+        <view class="weather-detail">
+          <text class="weather-desc">{{originWeather.desc}} {{originWeather.temp}}</text>
+          <text class="weather-tip">{{originWeather.tip}}</text>
+        </view>
+      </view>
+      <view class="weather-card" wx:if="{{destWeather}}">
+        <text class="weather-city">{{destWeather.city}}</text>
+        <text class="weather-icon">{{destWeather.icon}}</text>
+        <view class="weather-detail">
+          <text class="weather-desc">{{destWeather.desc}} {{destWeather.temp}}</text>
+          <text class="weather-tip">{{destWeather.tip}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 航班动态跟踪 -->
+    <view class="flight-dynamic" wx:if="{{flightTimeline.length}}">
+      <text class="dynamic-title">航班动态</text>
+      <view class="dynamic-timeline">
+        <view class="dynamic-item {{item.done ? 'dynamic-done' : 'dynamic-pending'}}" wx:for="{{flightTimeline}}" wx:key="status">
+          <view class="dynamic-dot-wrapper">
+            <view class="dynamic-dot {{item.done ? 'dot-done' : ''}}"></view>
+            <view class="dynamic-line" wx:if="{{index < flightTimeline.length - 1}}"></view>
+          </view>
+          <view class="dynamic-content">
+            <text class="dynamic-icon">{{item.icon}}</text>
+            <view class="dynamic-text">
+              <text class="dynamic-status">{{item.status}}</text>
+              <text class="dynamic-time">{{item.time}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="qr-area" wx:if="{{!isRefunded}}">
+    <!-- 已退票警告 -->
+    <view class="refund-warning" wx:if="{{isRefunded}}">
+      <text class="warning-icon">⚠️</text>
+      <text class="warning-text">该订单已退票，登机牌无效</text>
+    </view>
+    <view class="loading-box" wx:elif="{{isQrLoading}}">
         <view class="spinner"></view>
         <text>生成中...</text>
       </view>
@@ -60,7 +150,179 @@
       />
     </view>
 
-    <view class="tips">登机时请向工作人员出示此码</view>
-    <view class="tips-sub">截图保存到相册</view>
+    <view class="qr-area refunded-qr" wx:if="{{isRefunded}}">
+      <view class="refund-warning">
+        <text class="warning-icon">⚠️</text>
+        <text class="warning-text">该订单已退票\n登机牌无效</text>
+      </view>
+    </view>
+
+    <view class="tips" wx:if="{{!isRefunded}}">登机时请向工作人员出示此码</view>
+    <view class="order-id-row" wx:if="{{order._id}}">
+      <text class="order-id-text">订单号: {{order._id}}</text>
+      <text class="copy-btn" bindtap="onCopyOrderId">复制</text>
+    </view>
+    <button class="btn-save" bindtap="onSaveToAlbum" disabled="{{isQrLoading || isRefunded}}">保存二维码到相册</button>
+    <button class="btn-share" open-type="share" disabled="{{isRefunded}}">分享给好友</button>
+
+    <!-- 行程分享操作栏 -->
+    <view class="share-actions" wx:if="{{!isRefunded}}">
+      <view class="share-action-btn" bindtap="onShowShareCard">
+        <text class="share-action-icon">📋</text>
+        <text class="share-action-text">分享行程</text>
+      </view>
+      <view class="share-action-btn" bindtap="onAddToCalendar">
+        <text class="share-action-icon">📅</text>
+        <text class="share-action-text">添加日历</text>
+      </view>
+      <view class="share-action-btn" bindtap="onShowAirportNav">
+        <text class="share-action-icon">🗺️</text>
+        <text class="share-action-text">机场导航</text>
+      </view>
+    </view>
+
+    <!-- 行程提醒设置 -->
+    <view class="reminder-section" wx:if="{{!isRefunded}}">
+      <text class="reminder-title">行程提醒</text>
+      <view class="reminder-options">
+        <view class="reminder-opt {{reminderMinutes === 30 ? 'reminder-active' : ''}}" bindtap="onSelectReminderTime" data-minutes="30">30分钟</view>
+        <view class="reminder-opt {{reminderMinutes === 60 ? 'reminder-active' : ''}}" bindtap="onSelectReminderTime" data-minutes="60">1小时</view>
+        <view class="reminder-opt {{reminderMinutes === 120 ? 'reminder-active' : ''}}" bindtap="onSelectReminderTime" data-minutes="120">2小时</view>
+        <view class="reminder-opt {{reminderMinutes === 1440 ? 'reminder-active' : ''}}" bindtap="onSelectReminderTime" data-minutes="1440">1天</view>
+      </view>
+      <view class="reminder-btn {{reminderSet ? 'reminder-done' : ''}}" bindtap="onSetReminder">
+        {{reminderSet ? '已设置提醒' : '设置提醒'}}
+      </view>
+    </view>
+
+    <button class="btn-refund-boarding" wx:if="{{!isRefunded}}" bindtap="onRefundFromBoarding">申请退票</button>
+
+    <!-- 电子发票 -->
+    <view class="invoice-btn" wx:if="{{!isRefunded}}" bindtap="onRequestInvoice">
+      <text class="invoice-icon">🧾</text>
+      <text class="invoice-text">申请电子发票</text>
+    </view>
+
+    <!-- 发票弹窗 -->
+    <view class="modal-mask" wx:if="{{showInvoiceModal}}" bindtap="onCloseInvoice">
+      <view class="invoice-modal" catchtap="">
+        <view class="invoice-modal-header">
+          <text class="invoice-modal-title">电子发票</text>
+          <text class="invoice-modal-close" bindtap="onCloseInvoice">×</text>
+        </view>
+        <view class="invoice-body" wx:if="{{invoiceInfo}}">
+          <view class="invoice-title-row">
+            <text class="invoice-doc-title">{{invoiceInfo.title}}</text>
+            <text class="invoice-status">{{invoiceInfo.status}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">发票号码</text>
+            <text class="invoice-value">{{invoiceInfo.invoiceNo}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">航班</text>
+            <text class="invoice-value">{{invoiceInfo.flightNo}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">航线</text>
+            <text class="invoice-value">{{invoiceInfo.route}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">日期</text>
+            <text class="invoice-value">{{invoiceInfo.date}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">乘客</text>
+            <text class="invoice-value">{{invoiceInfo.passenger}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">座位</text>
+            <text class="invoice-value">{{invoiceInfo.seatNo}}</text>
+          </view>
+          <view class="invoice-divider"></view>
+          <view class="invoice-field">
+            <text class="invoice-label">金额</text>
+            <text class="invoice-value">{{invoiceInfo.amount}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">税率</text>
+            <text class="invoice-value">{{invoiceInfo.taxRate}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">税额</text>
+            <text class="invoice-value">{{invoiceInfo.taxAmount}}</text>
+          </view>
+          <view class="invoice-field invoice-total">
+            <text class="invoice-label">价税合计</text>
+            <text class="invoice-value invoice-total-value">{{invoiceInfo.totalAmount}}</text>
+          </view>
+          <view class="invoice-field">
+            <text class="invoice-label">开具日期</text>
+            <text class="invoice-value">{{invoiceInfo.issueDate}}</text>
+          </view>
+        </view>
+        <view class="invoice-actions">
+          <view class="invoice-copy-btn" bindtap="onCopyInvoice">复制发票信息</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 行程分享卡片弹窗 -->
+    <view class="modal-mask" wx:if="{{showShareCard}}" bindtap="onCloseShareCard">
+      <view class="share-card-modal" catchtap="">
+        <view class="share-card-header">
+          <text class="share-card-title">行程分享</text>
+          <text class="share-card-close" bindtap="onCloseShareCard">×</text>
+        </view>
+        <view class="share-card-preview">
+          <text class="share-card-text" selectable="true">{{shareCardText}}</text>
+        </view>
+        <view class="share-card-actions">
+          <view class="share-card-btn share-copy-btn" bindtap="onCopyShareText">复制到剪贴板</view>
+          <view class="share-card-btn share-friend-btn" open-type="share">分享给好友</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 机场导航弹窗 -->
+    <view class="modal-mask" wx:if="{{showAirportNav}}" bindtap="onCloseAirportNav">
+      <view class="airport-nav-modal" catchtap="">
+        <view class="airport-nav-header">
+          <text class="airport-nav-title">机场导航</text>
+          <text class="airport-nav-close" bindtap="onCloseAirportNav">×</text>
+        </view>
+        <view class="airport-nav-body">
+          <view class="airport-nav-map">
+            <!-- 简化机场平面图 -->
+            <view class="airport-map-bg">
+              <view class="map-zone map-entrance">入口</view>
+              <view class="map-zone map-security">安检</view>
+              <view class="map-zone map-lounge">候机区</view>
+              <view class="map-zone map-gate">登机口</view>
+            </view>
+          </view>
+          <view class="airport-nav-route">
+            <view class="nav-point" wx:for="{{airportNavPoints}}" wx:key="name">
+              <view class="nav-dot-wrapper">
+                <view class="nav-dot {{index === 0 ? 'nav-dot-start' : index === airportNavPoints.length - 1 ? 'nav-dot-end' : ''}}"></view>
+                <view class="nav-line" wx:if="{{index < airportNavPoints.length - 1}}"></view>
+              </view>
+              <view class="nav-info">
+                <view class="nav-info-header">
+                  <text class="nav-icon">{{item.icon}}</text>
+                  <text class="nav-name">{{item.name}}</text>
+                  <text class="nav-distance">{{item.distance}}</text>
+                </view>
+                <text class="nav-desc">{{item.desc}}</text>
+                <text class="nav-time" wx:if="{{item.time}}">{{item.time}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="nav-total">
+            <text class="nav-total-text">预计步行时间：约15分钟</text>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

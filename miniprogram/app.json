@@ -11,7 +11,8 @@
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#0052d9",
     "navigationBarTitleText": "云端航空",
-    "navigationBarTextStyle": "white"
+    "navigationBarTextStyle": "white",
+    "pageOrientation": "portrait"
   },
   "lazyCodeLoading": "requiredComponents",
   "tabBar": {

@@ -2,40 +2,221 @@
 <view class="container">
   <!-- 顶部航班信息 -->
   <view class="flight-info">
-    <view class="route">{{flight.origin}} ✈️ {{flight.dest}}</view>
-    <view class="detail">{{flight.flight_no}} | {{flight.dept_time}}</view>
+    <view class="back-icon" bindtap="onBeforeBack">←</view>
+    <view class="flight-info-center">
+      <view class="route">{{flight.origin}} ✈️ {{flight.dest}}</view>
+      <view class="detail">{{flight.flight_no}} | {{flight.dept_time}}</view>
+    </view>
   </view>
 
   <!-- 座位图区域 -->
   <view class="seat-area">
     <view class="screen">机头方向</view>
     
-    <view class="seat-grid">
-      <block wx:for="{{seats}}" wx:key="_id">
-        <view 
-          class="seat-item {{item.status > 0 ? 'sold' : ''}} {{selectedSeat._id === item._id ? 'selected' : ''}}" 
-          bindtap="onSelectSeat" 
-          data-seat="{{item}}"
-        >
-          <text>{{item.seat_no}}</text>
-          <text class="status-text">{{item.status > 0 ? '已占' : '可选'}}</text>
+    <!-- 座位图例 -->
+    <view class="seat-legend">
+      <view class="legend-item">
+        <view class="legend-box legend-available"></view>
+        <text class="legend-text">可选</text>
+      </view>
+      <view class="legend-item">
+        <view class="legend-box legend-sold"></view>
+        <text class="legend-text">已占</text>
+      </view>
+      <view class="legend-item">
+        <view class="legend-box legend-selected"></view>
+        <text class="legend-text">已选</text>
+      </view>
+      <view class="legend-item">
+        <text class="legend-tag window-legend">窗</text>
+        <text class="legend-text">靠窗</text>
+      </view>
+      <view class="legend-item">
+        <text class="legend-tag aisle-legend">道</text>
+        <text class="legend-text">过道</text>
+      </view>
+      <view class="legend-item">
+        <text class="available-count">剩余 {{availableCount}} 座</text>
+      </view>
+    </view>
+
+    <!-- 价格区域说明 -->
+    <view class="price-zone-bar">
+      <view class="price-zone-item">
+        <view class="zone-dot zone-front"></view>
+        <text class="zone-label">前排 +¥50</text>
+      </view>
+      <view class="price-zone-item">
+        <view class="zone-dot zone-mid"></view>
+        <text class="zone-label">中前 +¥20</text>
+      </view>
+      <view class="price-zone-item">
+        <view class="zone-dot zone-standard"></view>
+        <text class="zone-label">标准</text>
+      </view>
+      <view class="price-zone-item">
+        <text class="zone-label window-addon">窗+¥10</text>
+      </view>
+    </view>
+
+    <!-- 同行人选座 -->
+    <view class="companion-bar">
+      <view class="companion-toggle {{companionMode ? 'companion-active' : ''}}" bindtap="onToggleCompanion">
+        <text>{{companionMode ? '同行人模式已开启' : '同行人选座'}}</text>
+      </view>
+      <view class="recommend-btn" bindtap="onShowRecommend">
+        <text>智能推荐</text>
+      </view>
+      <view class="companion-controls" wx:if="{{companionMode}}">
+        <view class="companion-count-btn" bindtap="onReduceCompanion">-</view>
+        <text class="companion-count">{{companionCount}}人</text>
+        <view class="companion-count-btn" bindtap="onAddCompanion">+</view>
+      </view>
+    </view>
+    <view class="companion-seats-info" wx:if="{{companionHasSeats}}">
+      <text class="companion-seats-label">同行人座位：</text>
+      <text class="companion-seat-tag" wx:for="{{companionSeats}}" wx:key="_id">{{item.seat_no}}</text>
+    </view>
+    
+    <!-- 满座警告 -->
+    <view class="full-seat-warning" wx:if="{{isFullSeat}}">
+      <text class="warning-icon">⚠️</text>
+      <text class="warning-text">该航班已满座，请选择其他航班</text>
+    </view>
+
+    <!-- 骨架屏 -->
+    <view class="skeleton-seats" wx:if="{{seats.length === 0}}">
+      <view class="skeleton-row" wx:for="{{6}}" wx:key="index">
+        <view class="skeleton-row-label"></view>
+        <view class="skeleton-seat" wx:for="{{3}}" wx:key="idx"></view>
+      </view>
+    </view>
+
+    <view class="seat-grid-wrapper {{view3D ? 'view-3d' : ''}}" wx:else>
+      <!-- 3D视图切换按钮 -->
+      <view class="view-3d-toggle" bindtap="onToggle3DView">
+        <text>{{view3D ? '平面视图' : '3D视角'}}</text>
+      </view>
+      <!-- 3D机舱侧壁 -->
+      <view class="cabin-wall-left" wx:if="{{view3D}}"></view>
+      <view class="cabin-wall-right" wx:if="{{view3D}}"></view>
+      <!-- 列标签行 -->
+      <view class="seat-row seat-header-row">
+        <view class="row-label"></view>
+        <view class="seat-row-seats">
+          <block wx:for="{{seatRows[0].seats}}" wx:key="_id" wx:for-item="seat">
+            <view wx:if="{{seat.isAisle}}" class="seat-aisle-header"></view>
+            <view class="col-label">{{seat.seatCol}}</view>
+          </block>
         </view>
-      </block>
+      </view>
+      <view class="seat-row" wx:for="{{seatRows}}" wx:key="rowLabel">
+        <view class="row-label {{selectedSeat && selectedSeat.seatRow === item.rowLabel ? 'row-active' : ''}}">{{item.rowLabel}}</view>
+        <view class="seat-row-seats">
+          <block wx:for="{{item.seats}}" wx:key="_id" wx:for-item="seat">
+            <view
+              wx:if="{{seat.isAisle}}"
+              class="seat-aisle"
+            ></view>
+            <view
+              class="seat-item {{seat.isSold ? 'sold' : ''}} {{selectedSeat._id === seat._id ? 'selected' : ''}} {{seat.priceAddon && seat.priceAddon.zone === 'front' ? 'seat-front' : seat.priceAddon && seat.priceAddon.zone === 'midfront' ? 'seat-mid' : ''}}"
+              bindtap="onSelectSeat"
+              data-seat="{{seat}}"
+            >
+              <text>{{seat.seat_no}}</text>
+              <text class="seat-type-tag {{seat.isWindow ? 'window-tag' : 'aisle-tag'}}">{{seat.isWindow ? '窗' : '道'}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+      <view class="screen screen-tail">机尾方向</view>
+    </view>
+  </view>
+
+  <!-- 座位推荐弹窗 -->
+  <view class="modal-mask" wx:if="{{showRecommendPanel}}" bindtap="onCloseRecommend">
+    <view class="recommend-modal" catchtap="">
+      <view class="recommend-header">
+        <text class="recommend-title">智能推荐座位</text>
+        <text class="recommend-close" bindtap="onCloseRecommend">×</text>
+      </view>
+      <view class="recommend-list">
+        <view class="recommend-item" wx:for="{{recommendedSeats}}" wx:key="_id" bindtap="onSelectRecommend" data-seat="{{item}}">
+          <view class="recommend-rank rank-{{item.rank}}">{{item.rank}}</view>
+          <view class="recommend-info">
+            <text class="recommend-seat-no">{{item.seat_no}}</text>
+            <text class="recommend-reason">{{item.reason}}</text>
+          </view>
+          <view class="recommend-score">
+            <text class="score-value">{{item.score}}</text>
+            <text class="score-label">分</text>
+          </view>
+        </view>
+      </view>
+      <text class="recommend-tip">基于靠窗视野、过道便利、噪音水平等因素综合评分</text>
     </view>
   </view>
 
   <!-- 底部操作栏 -->
   <view class="footer-bar">
     <view class="selected-info">
+      <text class="footer-flight-no">{{flight.flight_no}}</text>
       <text wx:if="{{selectedSeat}}">已选: {{selectedSeat.seat_no}}</text>
       <text wx:else>请选择座位</text>
+      <text class="footer-price-info" wx:if="{{selectedSeat && seatPriceInfo}}">
+        <text wx:if="{{seatPriceInfo.hasAddon}}">¥{{flight.price}}+¥{{seatPriceInfo.addon}}</text>
+        <text wx:else>¥{{flight.price}}</text>
+      </text>
     </view>
-    <button 
-      class="btn-confirm {{!selectedSeat ? 'disabled' : ''}}" 
-      bindtap="onSubmitOrder" 
-      disabled="{{!selectedSeat}}"
+    <button
+      class="btn-confirm {{!selectedSeat || availableCount === 0 || submitting ? 'disabled' : ''}}"
+      bindtap="onSubmitOrder"
+      disabled="{{!selectedSeat || availableCount === 0 || submitting}}"
     >
-      确认下单 (¥{{flight.price}})
+      {{submitting ? '提交中...' : '确认下单 (¥' + (seatPriceInfo ? seatPriceInfo.totalPrice : flight.price) + ')'}}
     </button>
+  </view>
+
+  <!-- 选座提示动画 -->
+  <view class="seat-tip-animation" wx:if="{{selectedSeat}}" animation="{{tipAnimation}}">
+    <text class="tip-icon">✅</text>
+    <text class="tip-text">已选择 {{selectedSeat.seat_no}} 座位</text>
+  </view>
+
+  <!-- 已选座位信息卡片 -->
+  <view class="selected-seat-card" wx:if="{{selectedSeat}}">
+    <view class="card-close" catchtap="onCloseSeatCard">✕</view>
+    <view class="card-row">
+      <text class="card-label">座位号</text>
+      <text class="card-value seat-highlight">{{selectedSeat.seat_no}}</text>
+    </view>
+    <view class="card-row" wx:if="{{seatPriceInfo}}">
+      <text class="card-label">座位区域</text>
+      <text class="card-value zone-tag zone-{{seatPriceInfo.zone}}">{{seatPriceInfo.zone === 'front' ? '前排' : seatPriceInfo.zone === 'midfront' ? '中前' : '标准'}}</text>
+    </view>
+    <view class="card-row">
+      <text class="card-label">航班</text>
+      <text class="card-value">{{flight.flight_no}}</text>
+    </view>
+    <view class="card-row">
+      <text class="card-label">航线</text>
+      <text class="card-value">{{flight.origin}} → {{flight.dest}}</text>
+    </view>
+    <view class="card-row">
+      <text class="card-label">出发</text>
+      <text class="card-value">{{flight.dept_time}}</text>
+    </view>
+    <view class="card-row">
+      <text class="card-label">基础票价</text>
+      <text class="card-value">¥{{flight.price}}</text>
+    </view>
+    <view class="card-row" wx:if="{{seatPriceInfo && seatPriceInfo.hasAddon}}">
+      <text class="card-label">选座费</text>
+      <text class="card-value addon-highlight">+¥{{seatPriceInfo.addon}}</text>
+    </view>
+    <view class="card-row price-total-row">
+      <text class="card-label">合计</text>
+      <text class="card-value price-highlight">¥{{seatPriceInfo ? seatPriceInfo.totalPrice : flight.price}}</text>
+    </view>
   </view>
 </view>
