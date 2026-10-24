@@ -6,9 +6,10 @@
     <view class="avatar-wrapper">
       <!-- 微信开放能力：选择头像 -->
       <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <image class="avatar" src="{{userInfo.avatarUrl || '../../images/user.png'}}"></image>
+        <image class="avatar" src="{{userInfo.avatarUrl || '../../images/user.png'}}" bindtap="onPreviewAvatar"></image>
       </button>
-      <view class="edit-tip">点击更换头像</view>
+      <view class="edit-tip" wx:if="{{isLogin}}">点击更换头像</view>
+      <view class="edit-tip login-tip" wx:else>点击头像登录</view>
     </view>
     
     <view class="nickname-wrapper">
@@ -16,10 +17,180 @@
       <!-- 微信开放能力：填写昵称 -->
       <input type="nickname" class="nickname-input" placeholder="请输入昵称" value="{{userInfo.nickName}}" bindblur="onSaveNickname"/>
     </view>
+
+    <!-- 未登录提示 -->
+    <view class="login-guide" wx:if="{{!isLogin}}">
+      <text class="guide-text">请输入昵称并点击空白处完成登录</text>
+      <text class="guide-sub">登录后即可预订航班</text>
+    </view>
+    <view class="login-duration" wx:if="{{isLogin && loginDuration}}">
+      <text class="duration-label">已登录</text>
+      <text class="duration-value">{{loginDuration}}</text>
+    </view>
+  </view>
+
+  <!-- 订单统计 -->
+  <view class="stats-card" wx:if="{{isLogin}}">
+    <view class="stats-item" bindtap="onGoOrders" data-status="all">
+      <text class="stats-num">{{orderStats.total}}</text>
+      <text class="stats-label">总订单</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item" bindtap="onGoOrders" data-status="paid">
+      <text class="stats-num stats-num-blue">{{orderStats.paid}}</text>
+      <text class="stats-label">待出行</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item" bindtap="onGoOrders" data-status="refunded">
+      <text class="stats-num stats-num-gray">{{orderStats.refunded}}</text>
+      <text class="stats-label">已退票</text>
+    </view>
+  </view>
+
+  <!-- 会员等级卡片 -->
+  <view class="member-card" wx:if="{{isLogin}}">
+    <view class="member-header">
+      <text class="member-icon">{{memberLevel.icon}}</text>
+      <view class="member-info">
+        <text class="member-name">{{memberLevel.name}}</text>
+        <text class="member-points">{{memberLevel.points}} 积分</text>
+      </view>
+    </view>
+    <view class="member-progress" wx:if="{{memberLevel.nextLevel}}">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{memberLevel.progress}}%"></view>
+      </view>
+      <text class="progress-text">距{{memberLevel.nextLevel}}还需{{memberLevel.nextPoints - memberLevel.points}}积分</text>
+    </view>
+    <view class="member-max" wx:else>
+      <text class="max-text">已达最高等级</text>
+    </view>
+  </view>
+
+  <!-- 出行统计 -->
+  <view class="travel-stats-card" wx:if="{{travelStats.totalFlights > 0}}">
+    <text class="travel-stats-title">出行统计</text>
+    <view class="travel-stats-summary">
+      <view class="travel-summary-item">
+        <text class="travel-summary-value">{{travelStats.totalFlights}}</text>
+        <text class="travel-summary-label">飞行次数</text>
+      </view>
+      <view class="travel-summary-item">
+        <text class="travel-summary-value">{{travelStats.totalDistance}}</text>
+        <text class="travel-summary-label">总里程(km)</text>
+      </view>
+      <view class="travel-summary-item">
+        <text class="travel-summary-value">{{travelStats.statusDistribution.refunded}}</text>
+        <text class="travel-summary-label">退票次数</text>
+      </view>
+    </view>
+
+    <!-- 订单状态分布 -->
+    <view class="stats-distribution">
+      <text class="travel-section-label">订单状态</text>
+      <view class="distribution-bar">
+        <view class="dist-paid" style="width: {{travelStats.statusDistribution.paid / (travelStats.statusDistribution.paid + travelStats.statusDistribution.refunded) * 100}}%;"></view>
+        <view class="dist-refunded" style="width: {{travelStats.statusDistribution.refunded / (travelStats.statusDistribution.paid + travelStats.statusDistribution.refunded) * 100}}%;"></view>
+      </view>
+      <view class="distribution-legend">
+        <view class="legend-item"><view class="legend-dot legend-paid"></view><text class="legend-text">待出行 {{travelStats.statusDistribution.paid}}</text></view>
+        <view class="legend-item"><view class="legend-dot legend-refunded"></view><text class="legend-text">已退票 {{travelStats.statusDistribution.refunded}}</text></view>
+      </view>
+    </view>
+
+    <!-- 近6月消费趋势 -->
+    <view class="travel-month-chart" wx:if="{{travelStats.monthSpending.length > 0}}">
+      <text class="travel-section-label">近6月消费趋势</text>
+      <view class="spending-chart">
+        <view class="spending-bar-wrapper" wx:for="{{travelStats.monthSpending}}" wx:key="month">
+          <view class="spending-bar" style="height: {{item.barHeight}}px;"></view>
+          <text class="spending-amount" wx:if="{{item.amount > 0}}">¥{{item.amount}}</text>
+          <text class="spending-label">{{item.month}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 近6月飞行 -->
+    <view class="travel-month-chart" wx:if="{{travelStats.monthFlights.length > 0}}">
+      <text class="travel-section-label">近6月飞行</text>
+      <view class="month-chart">
+        <view class="month-bar-wrapper" wx:for="{{travelStats.monthFlights}}" wx:key="month">
+          <view class="month-bar" wx:if="{{item.count > 0}}" style="height: {{item.count * 20 + 5}}px;"></view>
+          <view class="month-bar month-bar-empty" wx:else></view>
+          <text class="month-label">{{item.month}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 航线消费分布 -->
+    <view class="route-distribution" wx:if="{{travelStats.routeDistribution.length > 0}}">
+      <text class="travel-section-label">航线消费分布</text>
+      <view class="route-dist-item" wx:for="{{travelStats.routeDistribution}}" wx:key="route">
+        <view class="route-dist-header">
+          <text class="route-dist-name">{{item.route}}</text>
+          <text class="route-dist-amount">¥{{item.amount}}</text>
+        </view>
+        <view class="route-dist-bar-bg">
+          <view class="route-dist-bar" style="width: {{item.amount / travelStats.routeDistribution[0].amount * 100}}%;"></view>
+        </view>
+        <text class="route-dist-info">{{item.count}}次 · 均价¥{{item.avgPrice}}</text>
+      </view>
+    </view>
+
+    <!-- 常飞航线 -->
+    <view class="travel-top-routes" wx:if="{{travelStats.topRoutes.length > 0}}">
+      <text class="travel-section-label">常飞航线</text>
+      <view class="travel-route-item" wx:for="{{travelStats.topRoutes}}" wx:key="route">
+        <text class="travel-route-name">{{item.route}}</text>
+        <text class="travel-route-count">{{item.count}}次</text>
+      </view>
+    </view>
+
+    <!-- 年度总结 -->
+    <view class="yearly-summary" wx:if="{{travelStats.yearlySummary.length > 0}}">
+      <text class="travel-section-label">年度总结</text>
+      <view class="yearly-item" wx:for="{{travelStats.yearlySummary}}" wx:key="year">
+        <view class="yearly-header">
+          <text class="yearly-year">{{item.year}}年</text>
+          <text class="yearly-flights">{{item.flights}}次飞行</text>
+        </view>
+        <view class="yearly-details">
+          <text class="yearly-detail">消费 ¥{{item.amount}}</text>
+          <text class="yearly-detail">里程 {{item.distance}}km</text>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 菜单列表 -->
-  <view class="menu-list">
+  <view class="menu-list" wx:if="{{isLogin}}">
+    <!-- 我的订单 -->
+    <view class="menu-item" bindtap="onGoOrders" data-status="all">
+      <view class="item-left">
+        <text class="icon">🎫</text>
+        <text>我的订单</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <!-- 我的收藏 -->
+    <view class="menu-item" bindtap="onShowFavorites">
+      <view class="item-left">
+        <text class="icon">⭐</text>
+        <text>我的收藏</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <!-- 常用乘客 -->
+    <view class="menu-item" bindtap="onShowPassengers">
+      <view class="item-left">
+        <text class="icon">👥</text>
+        <text>常用乘客</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
     <!-- 模拟支付检测功能 -->
     <view class="menu-item" bindtap="onCheckPayment">
       <view class="item-left">
@@ -27,6 +198,37 @@
         <text>支付安全检测</text>
       </view>
       <text class="arrow">></text>
+    </view>
+
+    <!-- 账户安全设置 -->
+    <view class="menu-item" bindtap="onAccountSecurity">
+      <view class="item-left">
+        <text class="icon">🔒</text>
+        <text>账户安全</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <!-- 主题切换 -->
+    <view class="menu-item" bindtap="onShowTheme">
+      <view class="item-left">
+        <text class="icon">🎨</text>
+        <text>主题切换</text>
+      </view>
+      <view class="theme-current">
+        <view class="theme-dot theme-dot-{{currentTheme}}"></view>
+        <text class="arrow">></text>
+      </view>
+    </view>
+
+    <!-- 系统消息 -->
+    <view class="menu-item" bindtap="onShowMessages">
+      <view class="item-left">
+        <text class="icon">🔔</text>
+        <text>系统消息</text>
+      </view>
+      <view class="msg-badge" wx:if="{{unreadCount > 0}}">{{unreadCount}}</view>
+      <text class="arrow" wx:else>></text>
     </view>
 
     <view class="menu-item" bindtap="onContact">
@@ -44,24 +246,229 @@
       </view>
       <text class="arrow">></text>
     </view>
+
+    <view class="menu-item" bindtap="onFeedback">
+      <view class="item-left">
+        <text class="icon">💬</text>
+        <text>意见反馈</text>
+      </view>
+      <text class="arrow">></text>
+    </view>
+
+    <view class="menu-item">
+      <view class="item-left">
+        <text class="icon">📤</text>
+        <text>分享给好友</text>
+      </view>
+      <button class="share-btn" open-type="share">></button>
+    </view>
+
+    <view class="menu-item logout-item" wx:if="{{isLogin}}" bindtap="onLogout">
+      <view class="item-left">
+        <text class="icon">🚪</text>
+        <text class="logout-text">退出登录</text>
+      </view>
+    </view>
   </view>
 
   <!-- 底部版本号 -->
-  <view class="footer">
+  <view class="footer" bindtap="onVersionTap">
     <text>v1.5.81 云端航空 Demo</text>
   </view>
 
   <view class="modal-mask" wx:if="{{showContactModal}}" bindtap="closeContactModal">
     <view class="modal-box" catchtap="preventBubble">
       <view class="modal-title">联系开发者</view>
-      <image 
-        src="/images/qrcode.png" 
-        class="qr-image" 
-        mode="aspectFit" 
-        show-menu-by-longpress="{{true}}"
-      ></image>
-      <view class="modal-tip">长按识别二维码添加好友</view>
+      <canvas canvas-id="qrcode" class="qr-canvas"></canvas>
+      <view class="modal-tip">客服二维码</view>
       <view class="close-btn" bindtap="closeContactModal">×</view>
+    </view>
+  </view>
+
+  <!-- 意见反馈弹窗 -->
+  <view class="modal-mask" wx:if="{{showFeedbackModal}}" bindtap="closeFeedbackModal">
+    <view class="modal-box feedback-modal" catchtap="preventBubble">
+      <view class="modal-title">意见反馈</view>
+      <view class="feedback-types">
+        <view class="feedback-type {{feedbackType === 'bug' ? 'type-active' : ''}}" bindtap="onSelectFeedbackType" data-type="bug">Bug反馈</view>
+        <view class="feedback-type {{feedbackType === 'feature' ? 'type-active' : ''}}" bindtap="onSelectFeedbackType" data-type="feature">功能建议</view>
+        <view class="feedback-type {{feedbackType === 'other' ? 'type-active' : ''}}" bindtap="onSelectFeedbackType" data-type="other">其他</view>
+      </view>
+      <textarea
+        class="feedback-textarea"
+        placeholder="请描述您的问题或建议..."
+        value="{{feedbackContent}}"
+        bindinput="onFeedbackInput"
+        maxlength="500"
+      />
+      <view class="feedback-char-count">{{feedbackContent.length || 0}}/500</view>
+      <view class="feedback-actions">
+        <view class="feedback-btn feedback-cancel" bindtap="closeFeedbackModal">取消</view>
+        <view class="feedback-btn feedback-submit" bindtap="onSubmitFeedback">提交</view>
+      </view>
+      <view class="close-btn" bindtap="closeFeedbackModal">×</view>
+    </view>
+  </view>
+
+  <!-- 我的收藏弹窗 -->
+  <view class="modal-mask" wx:if="{{showFavoritesModal}}" bindtap="closeFavoritesModal">
+    <view class="modal-box favorites-modal" catchtap="preventBubble">
+      <view class="modal-title">我的收藏</view>
+      <view class="favorites-list" wx:if="{{favoriteFlights.length > 0}}">
+        <view class="fav-flight-item" wx:for="{{favoriteFlights}}" wx:key="_id">
+          <view class="fav-flight-info">
+            <text class="fav-flight-no">{{item.flight_no}}</text>
+            <text class="fav-route">{{item.origin}} → {{item.dest}}</text>
+            <text class="fav-price">¥{{item.price}}</text>
+          </view>
+          <view class="fav-flight-actions">
+            <view class="fav-book-btn" bindtap="onBookFavorite" data-flight="{{item}}">预订</view>
+            <view class="fav-remove-btn" catchtap="onRemoveFavorite" data-id="{{item._id}}">移除</view>
+          </view>
+        </view>
+      </view>
+      <view class="favorites-empty" wx:else>
+        <text class="fav-empty-icon">☆</text>
+        <text class="fav-empty-text">暂无收藏航班</text>
+        <text class="fav-empty-sub">在航班列表页点击☆收藏航班</text>
+      </view>
+      <view class="close-btn" bindtap="closeFavoritesModal">×</view>
+    </view>
+  </view>
+
+  <!-- 账户安全弹窗 -->
+  <view class="modal-mask" wx:if="{{showSecurityModal}}" bindtap="closeSecurityModal">
+    <view class="modal-box security-modal" catchtap="preventBubble">
+      <view class="modal-title">账户安全</view>
+      <view class="security-list">
+        <view class="security-item">
+          <view class="security-left">
+            <text class="security-icon">📱</text>
+            <view class="security-info">
+              <text class="security-name">手机绑定</text>
+              <text class="security-desc">未绑定</text>
+            </view>
+          </view>
+          <text class="security-action" bindtap="onBindPhone">绑定</text>
+        </view>
+        <view class="security-item">
+          <view class="security-left">
+            <text class="security-icon">🔑</text>
+            <view class="security-info">
+              <text class="security-name">登录密码</text>
+              <text class="security-desc">未设置</text>
+            </view>
+          </view>
+          <text class="security-action" bindtap="onSetPassword">设置</text>
+        </view>
+        <view class="security-item">
+          <view class="security-left">
+            <text class="security-icon">🛡️</text>
+            <view class="security-info">
+              <text class="security-name">实名认证</text>
+              <text class="security-desc security-done">已认证</text>
+            </view>
+          </view>
+          <text class="security-status-done">已认证</text>
+        </view>
+        <view class="security-item">
+          <view class="security-left">
+            <text class="security-icon">📧</text>
+            <view class="security-info">
+              <text class="security-name">邮箱绑定</text>
+              <text class="security-desc">未绑定</text>
+            </view>
+          </view>
+          <text class="security-action" bindtap="onBindEmail">绑定</text>
+        </view>
+      </view>
+      <view class="close-btn" bindtap="closeSecurityModal">×</view>
+    </view>
+  </view>
+
+  <!-- 常用乘客弹窗 -->
+  <view class="modal-mask" wx:if="{{showPassengersModal}}" bindtap="closePassengersModal">
+    <view class="modal-box passengers-modal" catchtap="preventBubble">
+      <view class="modal-title">{{editingPassengerId ? '编辑乘客' : '常用乘客'}}</view>
+      <view class="passenger-list" wx:if="{{passengers.length > 0 && !editingPassengerId}}">
+        <view class="passenger-item" wx:for="{{passengers}}" wx:key="id">
+          <view class="passenger-info">
+            <view class="passenger-name-row">
+              <text class="passenger-name">{{item.name}}</text>
+              <text class="passenger-type-tag {{item.typeClass}}">{{item.typeText}}</text>
+            </view>
+            <text class="passenger-id">{{item.idCard}}</text>
+            <text class="passenger-phone" wx:if="{{item.phone}}">{{item.phone}}</text>
+          </view>
+          <view class="passenger-actions">
+            <text class="passenger-edit" catchtap="onEditPassenger" data-passenger="{{item}}">编辑</text>
+            <text class="passenger-delete" catchtap="onDeletePassenger" data-index="{{index}}">删除</text>
+          </view>
+        </view>
+      </view>
+      <view class="passenger-empty" wx:if="{{passengers.length === 0 && !editingPassengerId}}">
+        <text class="passenger-empty-text">暂无常用乘客</text>
+      </view>
+      <view class="add-passenger-form">
+        <input class="passenger-input" placeholder="乘客姓名" value="{{newPassengerName}}" bindinput="onInputPassengerName" />
+        <input class="passenger-input" placeholder="身份证号" value="{{newPassengerIdCard}}" bindinput="onInputPassengerIdCard" />
+        <input class="passenger-input" placeholder="手机号（选填）" type="number" value="{{newPassengerPhone}}" bindinput="onInputPassengerPhone" />
+        <view class="passenger-type-selector">
+          <text class="type-label">乘客类型：</text>
+          <view class="type-options">
+            <text class="type-option {{newPassengerType === 'adult' ? 'type-active' : ''}}" bindtap="onPassengerTypeChange" data-value="adult">成人</text>
+            <text class="type-option {{newPassengerType === 'child' ? 'type-active' : ''}}" bindtap="onPassengerTypeChange" data-value="child">儿童</text>
+          </view>
+        </view>
+        <view class="add-passenger-btn" bindtap="onAddPassenger">{{editingPassengerId ? '保存修改' : '添加乘客'}}</view>
+        <view class="cancel-edit-btn" wx:if="{{editingPassengerId}}" bindtap="onCancelEditPassenger">取消编辑</view>
+      </view>
+      <view class="close-btn" bindtap="closePassengersModal">×</view>
+    </view>
+  </view>
+
+  <!-- 系统消息弹窗 -->
+  <view class="modal-mask" wx:if="{{showMessagesModal}}" bindtap="closeMessagesModal">
+    <view class="modal-box messages-modal" catchtap="preventBubble">
+      <view class="modal-title">系统消息</view>
+      <view class="messages-list" wx:if="{{messages.length > 0}}">
+        <view class="message-item {{item.read ? '' : 'unread'}}" wx:for="{{messages}}" wx:key="id">
+          <view class="message-header">
+            <text class="message-title">{{item.title}}</text>
+            <text class="message-time">{{item.time}}</text>
+          </view>
+          <text class="message-content">{{item.content}}</text>
+        </view>
+      </view>
+      <view class="messages-empty" wx:else>
+        <text class="messages-empty-text">暂无消息</text>
+      </view>
+      <view class="close-btn" bindtap="closeMessagesModal">×</view>
+    </view>
+  </view>
+
+  <!-- 主题切换弹窗 -->
+  <view class="modal-mask" wx:if="{{showThemeModal}}" bindtap="closeThemeModal">
+    <view class="modal-box theme-modal" catchtap="preventBubble">
+      <view class="modal-title">主题切换</view>
+      <view class="theme-options">
+        <view class="theme-option {{currentTheme === 'blue' ? 'theme-active' : ''}}" bindtap="onSelectTheme" data-theme="blue">
+          <view class="theme-preview blue-preview"></view>
+          <text class="theme-name">天空蓝</text>
+          <text class="theme-check" wx:if="{{currentTheme === 'blue'}}">✓</text>
+        </view>
+        <view class="theme-option {{currentTheme === 'green' ? 'theme-active' : ''}}" bindtap="onSelectTheme" data-theme="green">
+          <view class="theme-preview green-preview"></view>
+          <text class="theme-name">翡翠绿</text>
+          <text class="theme-check" wx:if="{{currentTheme === 'green'}}">✓</text>
+        </view>
+        <view class="theme-option {{currentTheme === 'purple' ? 'theme-active' : ''}}" bindtap="onSelectTheme" data-theme="purple">
+          <view class="theme-preview purple-preview"></view>
+          <text class="theme-name">星空紫</text>
+          <text class="theme-check" wx:if="{{currentTheme === 'purple'}}">✓</text>
+        </view>
+      </view>
+      <view class="close-btn" bindtap="closeThemeModal">×</view>
     </view>
   </view>
 </view>
