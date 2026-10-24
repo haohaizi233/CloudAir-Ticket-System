@@ -8,35 +8,130 @@
         <text wx:if="{{displayKeyword}}" class="keyword-tag">搜: {{displayKeyword}}</text>
       </view>
     </view>
-    <view class="status-icon">✈️</view>
+    <view class="status-icon back-btn" bindtap="onGoHome">🏠</view>
+  </view>
+
+  <!-- 结果数量提示 -->
+  <view class="result-count" wx:if="{{!loading && flightList.length > 0}}">
+    共找到 <text class="count-num">{{flightList.length}}</text> 个航班
   </view>
 
   <view class="list-container">
     
-    <block wx:if="{{flightList.length > 0}}">
+    <!-- 骨架屏 -->
+    <block wx:if="{{loading}}">
+      <view class="skeleton-card" wx:for="{{3}}" wx:key="index">
+        <view class="skeleton-top">
+          <view class="skeleton-col">
+            <view class="skeleton-line sm"></view>
+            <view class="skeleton-line lg"></view>
+            <view class="skeleton-line md"></view>
+          </view>
+          <view class="skeleton-col center">
+            <view class="skeleton-line xs"></view>
+            <view class="skeleton-line md"></view>
+          </view>
+          <view class="skeleton-col">
+            <view class="skeleton-line lg"></view>
+            <view class="skeleton-line md"></view>
+          </view>
+        </view>
+        <view class="skeleton-bottom">
+          <view class="skeleton-line price"></view>
+          <view class="skeleton-line btn"></view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 排序栏 -->
+    <view class="sort-bar" wx:if="{{!loading && allFlightList.length > 0}}">
+      <view class="sort-item {{sortBy === 'default' ? 'active' : ''}}" bindtap="onSortChange" data-sort="default">默认</view>
+      <view class="sort-item {{sortBy === 'priceAsc' ? 'active' : ''}}" bindtap="onSortChange" data-sort="priceAsc">价格↑</view>
+      <view class="sort-item {{sortBy === 'priceDesc' ? 'active' : ''}}" bindtap="onSortChange" data-sort="priceDesc">价格↓</view>
+      <view class="sort-item {{sortBy === 'timeAsc' ? 'active' : ''}}" bindtap="onSortChange" data-sort="timeAsc">时间↑</view>
+      <view class="sort-item filter-toggle {{showFilter ? 'active' : ''}}" bindtap="onToggleFilter">筛选</view>
+      <view class="sort-item compare-toggle {{compareMode ? 'active' : ''}}" bindtap="onToggleCompare">对比</view>
+      <view class="sort-item price-compare-toggle" bindtap="onShowMultiDateCompare">比价</view>
+    </view>
+
+    <!-- 筛选面板 -->
+    <view class="filter-panel" wx:if="{{showFilter && !loading && allFlightList.length > 0}}">
+      <view class="filter-section">
+        <text class="filter-label">价格区间</text>
+        <view class="filter-options">
+          <view class="filter-opt {{filterPriceRange === 'all' ? 'opt-active' : ''}}" bindtap="onFilterPrice" data-range="all">全部</view>
+          <view class="filter-opt {{filterPriceRange === 'low' ? 'opt-active' : ''}}" bindtap="onFilterPrice" data-range="low">低价</view>
+          <view class="filter-opt {{filterPriceRange === 'mid' ? 'opt-active' : ''}}" bindtap="onFilterPrice" data-range="mid">中价</view>
+          <view class="filter-opt {{filterPriceRange === 'high' ? 'opt-active' : ''}}" bindtap="onFilterPrice" data-range="high">高价</view>
+        </view>
+      </view>
+      <view class="filter-section">
+        <text class="filter-label">出发时段</text>
+        <view class="filter-options">
+          <view class="filter-opt {{filterTimeRange === 'all' ? 'opt-active' : ''}}" bindtap="onFilterTime" data-range="all">全部</view>
+          <view class="filter-opt {{filterTimeRange === 'morning' ? 'opt-active' : ''}}" bindtap="onFilterTime" data-range="morning">上午 6-12</view>
+          <view class="filter-opt {{filterTimeRange === 'afternoon' ? 'opt-active' : ''}}" bindtap="onFilterTime" data-range="afternoon">下午 12-18</view>
+          <view class="filter-opt {{filterTimeRange === 'evening' ? 'opt-active' : ''}}" bindtap="onFilterTime" data-range="evening">晚间 18-6</view>
+        </view>
+      </view>
+      <view class="filter-section filter-toggle-row">
+        <text class="filter-label">只看有票</text>
+        <view class="filter-switch {{filterOnlyAvailable ? 'switch-on' : ''}}" bindtap="onToggleOnlyAvailable">
+          <view class="switch-dot"></view>
+        </view>
+      </view>
+      <view class="filter-actions">
+        <view class="filter-reset" bindtap="onResetFilter">重置</view>
+        <view class="filter-result-count">筛选结果: {{flightList.length}} 个航班</view>
+      </view>
+    </view>
+
+    <block wx:if="{{!loading && flightList.length > 0}}">
       <view class="flight-card" wx:for="{{flightList}}" wx:key="_id">
-        
-        <view class="card-top">
+
+        <view class="card-top" bindtap="onFlightDetail" data-flight="{{item}}">
+          <view class="card-top-left">
+            <view class="card-tag-row">
+              <view class="flight-no-tag">{{item.flight_no}}</view>
+              <view class="on-time-tag {{item.onTimeClass}}">准点{{item.onTimeRate}}%</view>
+              <text class="delay-tag delay-{{item.delayRisk}}" wx:if="{{item.delayRisk !== 'low'}}">{{item.delayRisk === 'high' ? '易延误' : '可能延误'}}</text>
+              <text class="flight-score score-{{item.scoreClass}}">{{item.score}}分</text>
+            </view>
+          </view>
+
+          <view class="card-top-right">
+            <view class="card-top-actions">
+              <text class="date-label" wx:if="{{!searchParams.date}}">{{item.simple_date}}</text>
+              <text class="fav-btn {{item.isFav ? 'fav-active' : ''}}" catchtap="onToggleFavorite" data-flight="{{item}}">{{item.isFav ? '★' : '☆'}}</text>
+            </view>
+          </view>
+
+          <view class="compare-check" wx:if="{{compareMode}}" catchtap="onToggleCompareItem" data-flight="{{item}}">
+            <view class="compare-check-box {{item.isCompareSelected ? 'checked' : ''}}">
+              <text wx:if="{{item.isCompareSelected}}">✓</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card-route" bindtap="onFlightDetail" data-flight="{{item}}">
           <view class="time-col">
-            <text class="date-label" wx:if="{{!searchParams.date}}">{{item.simple_date}}</text>
-            
             <text class="time">{{item.simple_dept_time}}</text>
             <text class="airport">{{item.origin}}</text>
           </view>
-          
+
           <view class="arrow-col">
-            <text class="duration">直飞</text>
+            <text class="duration" wx:if="{{item.duration}}">{{item.duration}}</text>
+            <text class="duration" wx:else>直飞</text>
             <view class="line-box">
               <view class="dot"></view>
               <view class="line"></view>
               <view class="plane-icon">✈</view>
             </view>
             <text class="plane-type">{{item.plane_type}}</text>
+            <text class="stop-info" wx:if="{{item.stopCity}}">经停: {{item.stopCity}}</text>
           </view>
-          
+
           <view class="time-col">
-            <view class="placeholder-space" wx:if="{{!searchParams.date}}"></view>
-            
             <text class="time">{{item.simple_arr_time}}</text>
             <text class="airport">{{item.dest}}</text>
           </view>
@@ -44,10 +139,17 @@
 
         <view class="card-bottom">
           <view class="price">
-            <text class="symbol">¥</text>
-            <text class="amount">{{item.price}}</text>
+            <view class="price-main">
+              <text class="symbol">¥</text>
+              <text class="amount">{{item.price}}</text>
+              <text class="lowest-tag" wx:if="{{item.isLowestPrice}}">最低价</text>
+            </view>
+            <text class="seat-info-text {{item.seatLow ? 'seat-low' : ''}} {{item.seatSoldOut ? 'seat-sold-out' : ''}}" wx:if="{{item.hasSeats}}">{{item.seatSoldOut ? '已售罄' : '余票 ' + item.seatAvailable + '/' + item.seatTotal}}</text>
           </view>
-          <button class="btn-book" bindtap="onBook" data-flight="{{item}}">预订</button>
+          <view class="card-btn-group">
+            <text class="price-alert-btn" catchtap="onSetPriceAlert" data-flight="{{item}}" wx:if="{{!item.seatSoldOut}}">降价提醒</text>
+            <button class="btn-book {{item.seatSoldOut ? 'sold-out' : ''}}" catchtap="onBook" data-flight="{{item}}" disabled="{{item.seatSoldOut}}">{{item.seatSoldOut ? '售罄' : '预订'}}</button>
+          </view>
         </view>
       </view>
     </block>
@@ -55,10 +157,260 @@
     <block wx:else>
       <view class="empty-state" wx:if="{{!loading}}">
         <text class="empty-icon">🛫</text>
-        <text>抱歉，没有找到符合条件的航班</text>
+        <text class="empty-title">抱歉，没有找到符合条件的航班</text>
         <text class="sub-text">尝试减少筛选条件试试</text>
+        <button class="btn-research" bindtap="onReSearch">重新搜索</button>
+        <view class="hot-routes">
+          <text class="hot-routes-title">热门航线推荐</text>
+          <view class="hot-route-list">
+            <view class="hot-route-item" wx:for="{{hotRoutes}}" wx:key="from" bindtap="onHotRoute" data-from="{{item.from}}" data-to="{{item.to}}">
+              <text>{{item.from}} → {{item.to}}</text>
+            </view>
+          </view>
+        </view>
       </view>
     </block>
 
+    <!-- 底部加载提示 -->
+    <view class="list-footer" wx:if="{{!loading && flightList.length > 0}}">
+      <text class="footer-text">— 已加载全部 {{flightList.length}} 个航班 —</text>
+    </view>
+
+    <!-- 对比操作栏 -->
+    <view class="compare-bar" wx:if="{{compareMode && compareList.length > 0}}">
+      <text class="compare-info">已选 {{compareList.length}} 个航班</text>
+      <view class="compare-action-btn" bindtap="onShowCompare">开始对比</view>
+    </view>
+
+  </view>
+
+  <!-- 航班详情弹窗 -->
+  <view class="modal-mask" wx:if="{{showDetailModal}}" bindtap="closeDetailModal">
+    <view class="detail-modal" catchtap="preventBubble">
+      <view class="detail-header">
+        <text class="detail-flight-no">{{detailFlight.flight_no}}</text>
+        <text class="detail-close" bindtap="closeDetailModal">×</text>
+      </view>
+      <view class="detail-route">
+        <view class="detail-city-col">
+          <text class="detail-city">{{detailFlight.origin}}</text>
+          <text class="detail-time">{{detailFlight.simple_dept_time}}</text>
+        </view>
+        <view class="detail-arrow-col">
+          <text class="detail-duration">{{detailFlight.duration || '直飞'}}</text>
+          <view class="detail-line-box">
+            <view class="dot"></view>
+            <view class="line"></view>
+            <text class="plane-icon">✈</text>
+          </view>
+        </view>
+        <view class="detail-city-col">
+          <text class="detail-city">{{detailFlight.dest}}</text>
+          <text class="detail-time">{{detailFlight.simple_arr_time}}</text>
+        </view>
+      </view>
+      <view class="detail-info-grid">
+        <view class="detail-info-item">
+          <text class="detail-info-label">机型</text>
+          <text class="detail-info-value">{{detailFlight.plane_type}}</text>
+        </view>
+        <view class="detail-info-item">
+          <text class="detail-info-label">准点率</text>
+          <text class="detail-info-value">{{detailFlight.onTimeRate}}%</text>
+        </view>
+        <view class="detail-info-item">
+          <text class="detail-info-label">日期</text>
+          <text class="detail-info-value">{{detailFlight.simple_date}}</text>
+        </view>
+        <view class="detail-info-item">
+          <text class="detail-info-label">余票</text>
+          <text class="detail-info-value">{{detailFlight.seatAvailable || 0}}/{{detailFlight.seatTotal || 0}}</text>
+        </view>
+        <view class="detail-info-item" wx:if="{{detailFlight.stopCity}}">
+          <text class="detail-info-label">经停</text>
+          <text class="detail-info-value">{{detailFlight.stopCity}}</text>
+        </view>
+        <view class="detail-info-item" wx:if="{{detailFlight.hasDelayRisk}}">
+          <text class="detail-info-label">延误预测</text>
+          <text class="detail-info-value delay-predict-{{detailFlight.delayRisk}}">{{detailFlight.isHighDelay ? '高风险' : '中等风险'}} {{detailFlight.delayMinutes}}分钟</text>
+        </view>
+      </view>
+
+      <!-- 航班动态追踪 -->
+      <view class="flight-dynamics" wx:if="{{flightDynamics}}">
+        <view class="dynamics-title">航班动态</view>
+        <!-- 天气信息 -->
+        <view class="weather-row">
+          <view class="weather-item">
+            <text class="weather-city">{{detailFlight.origin}}</text>
+            <text class="weather-text">{{flightDynamics.originWeather.text}}</text>
+            <text class="weather-temp">{{flightDynamics.originWeather.temp}}°C</text>
+          </view>
+          <view class="weather-arrow">→</view>
+          <view class="weather-item">
+            <text class="weather-city">{{detailFlight.dest}}</text>
+            <text class="weather-text">{{flightDynamics.destWeather.text}}</text>
+            <text class="weather-temp">{{flightDynamics.destWeather.temp}}°C</text>
+          </view>
+        </view>
+        <!-- 飞行阶段时间线 -->
+        <view class="phase-timeline">
+          <view class="phase-item {{phase.done ? 'phase-done' : ''}} {{phase.current ? 'phase-current' : ''}}" wx:for="{{flightDynamics.phases}}" wx:key="key">
+            <view class="phase-dot"></view>
+            <view class="phase-line" wx:if="{{index < flightDynamics.phases.length - 1}}"></view>
+            <view class="phase-content">
+              <text class="phase-label">{{phase.label}}</text>
+              <text class="phase-time" wx:if="{{phase.time}}">{{phase.time}}</text>
+              <text class="phase-desc">{{phase.desc}}</text>
+            </view>
+          </view>
+        </view>
+        <!-- 历史延误 -->
+        <view class="delay-history">
+          <text class="delay-history-title">近5次延误记录</text>
+          <view class="delay-bars">
+            <view class="delay-bar-item" wx:for="{{flightDynamics.recentDelays}}" wx:key="index">
+              <view class="delay-bar {{item.barClass}}" style="height: {{item.delay + 5}}px;"></view>
+              <text class="delay-bar-label">{{item.delay}}分</text>
+            </view>
+          </view>
+          <text class="delay-avg">平均延误 {{flightDynamics.avgDelay}} 分钟</text>
+        </view>
+      </view>
+      <view class="detail-price-row">
+        <text class="detail-price-label">票价</text>
+        <text class="detail-price">¥{{detailFlight.price}}</text>
+      </view>
+      <button class="detail-book-btn" bindtap="onBookFromDetail" data-flight="{{detailFlight}}">立即预订</button>
+    </view>
+  </view>
+
+  <!-- 航班对比弹窗 -->
+  <view class="modal-mask" wx:if="{{showCompareModal}}" bindtap="onCloseCompare">
+    <view class="compare-modal" catchtap="">
+      <view class="compare-modal-header">
+        <text class="compare-modal-title">航班对比</text>
+        <text class="compare-modal-close" bindtap="onCloseCompare">×</text>
+      </view>
+      <scroll-view class="compare-modal-body" scroll-x="true">
+        <view class="compare-table">
+          <view class="compare-row compare-header-row">
+            <view class="compare-label-col">项目</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.flight_no}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">出发</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.simple_dept_time}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">到达</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.simple_arr_time}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">时长</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.duration || '直飞'}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">价格</view>
+            <view class="compare-value-col compare-price" wx:for="{{compareList}}" wx:key="_id">¥{{item.price}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">准点率</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.onTimeRate}}%</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">机型</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.plane_type}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">余票</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.seatAvailable || 0}}/{{item.seatTotal || 0}}</view>
+          </view>
+          <view class="compare-row">
+            <view class="compare-label-col">经停</view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">{{item.stopCity || '无'}}</view>
+          </view>
+          <view class="compare-row compare-action-row">
+            <view class="compare-label-col"></view>
+            <view class="compare-value-col" wx:for="{{compareList}}" wx:key="_id">
+              <view class="compare-book-btn" bindtap="onBookFromCompare" data-flight="{{item}}">预订</view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 价格提醒弹窗 -->
+  <view class="modal-mask" wx:if="{{showPriceAlertModal}}" bindtap="onClosePriceAlert">
+    <view class="price-alert-modal" catchtap="">
+      <view class="price-alert-header">
+        <text class="price-alert-title">设置降价提醒</text>
+        <text class="price-alert-close" bindtap="onClosePriceAlert">×</text>
+      </view>
+      <view class="price-alert-body">
+        <view class="price-alert-flight">
+          <text class="price-alert-no">{{priceAlertFlight.flight_no}}</text>
+          <text class="price-alert-route">{{priceAlertFlight.origin}} → {{priceAlertFlight.dest}}</text>
+        </view>
+        <view class="price-alert-current">
+          <text class="price-alert-label">当前价格</text>
+          <text class="price-alert-current-price">¥{{priceAlertFlight.price}}</text>
+        </view>
+        <view class="price-alert-target">
+          <text class="price-alert-label">目标价格</text>
+          <input class="price-alert-input" type="number" value="{{priceAlertTarget}}" bindinput="onInputTargetPrice" placeholder="输入期望价格" />
+        </view>
+        <text class="price-alert-tip">当票价低于目标价格时，将发送提醒通知</text>
+      </view>
+      <view class="price-alert-footer">
+        <view class="price-alert-modal-btn price-alert-cancel" bindtap="onClosePriceAlert">取消</view>
+        <view class="price-alert-modal-btn price-alert-confirm" bindtap="onConfirmPriceAlert">确认设置</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 已设置的价格提醒列表 -->
+  <view class="price-alerts-section" wx:if="{{priceAlerts.length > 0 && !loading}}">
+    <view class="price-alerts-header">
+      <text class="price-alerts-title">降价提醒</text>
+      <text class="price-alerts-count">{{priceAlerts.length}}个</text>
+    </view>
+    <view class="price-alerts-list">
+      <view class="price-alert-item" wx:for="{{priceAlerts}}" wx:key="flightId">
+        <view class="price-alert-item-info">
+          <text class="price-alert-item-no">{{item.flightNo}}</text>
+          <text class="price-alert-item-route">{{item.origin}} → {{item.dest}}</text>
+        </view>
+        <view class="price-alert-item-prices">
+          <text class="price-alert-item-current">¥{{item.currentPrice}}</text>
+          <text class="price-alert-item-arrow">→</text>
+          <text class="price-alert-item-target">¥{{item.targetPrice}}</text>
+        </view>
+        <text class="price-alert-item-delete" catchtap="onDeletePriceAlert" data-index="{{index}}">✕</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 多日期比价弹窗 -->
+  <view class="modal-mask" wx:if="{{showMultiDateCompare}}" bindtap="onCloseMultiDateCompare">
+    <view class="multi-date-modal" catchtap="">
+      <view class="multi-date-header">
+        <text class="multi-date-title">多日期比价</text>
+        <text class="multi-date-close" bindtap="onCloseMultiDateCompare">×</text>
+      </view>
+      <view class="multi-date-body">
+        <view class="multi-date-chart">
+          <view class="date-price-col" wx:for="{{multiDatePrices}}" wx:key="dateStr" bindtap="onSelectCompareDate" data-date="{{item.dateStr}}">
+            <text class="date-price-value {{item.priceClass}}">¥{{item.price}}</text>
+            <view class="date-price-bar {{item.priceClass}}" style="height: {{item.price / 10}}px;"></view>
+            <text class="date-price-day {{item.isToday ? 'today' : ''}}">{{item.dayLabel}}</text>
+            <text class="date-price-week">{{item.weekDay}}</text>
+            <text class="date-price-lowest" wx:if="{{item.isLowest}}">最低</text>
+          </view>
+        </view>
+        <text class="multi-date-tip">点击日期查看该日航班</text>
+      </view>
+    </view>
   </view>
 </view>

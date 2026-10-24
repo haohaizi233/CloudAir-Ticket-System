@@ -1,160 +1,1094 @@
 /* pages/seat-select/index.wxss */
 
-/* 1. 全局与容器 */
+/* 1. Global & Container */
 page {
-  background-color: #f6f6f6;
-  padding-bottom: 90px; /* 底部留白增加，防止遮挡 */
+  background-color: #f4f6f9;
+  padding-bottom: 110px;
 }
 
 .container {
   padding-bottom: 20px;
 }
 
-/* 2. 顶部航班信息 */
+/* 2. Flight Header */
 .flight-info {
-  background-color: #0052d9;
+  background: linear-gradient(135deg, #0052d9 0%, #2a6cf7 50%, #4e83f7 100%);
   color: white;
-  padding: 20px;
+  padding: 28px 22px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8px 28px rgba(0, 82, 217, 0.35);
+  position: relative;
+}
+
+.flight-info::after {
+  content: '';
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: linear-gradient(to bottom, rgba(0, 82, 217, 0.1), transparent);
+  pointer-events: none;
+}
+
+.back-icon {
+  font-size: 24px;
+  padding: 0 14px 0 0;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.back-icon:active {
+  opacity: 1;
+}
+
+.flight-info-center {
+  flex: 1;
   text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 82, 217, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .route {
-  font-size: 22px;
-  font-weight: bold;
+  font-size: 24px;
+  font-weight: 800;
   margin-bottom: 8px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  line-height: 1.3;
 }
 
 .detail {
   font-size: 14px;
   opacity: 0.9;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
 }
 
-/* 3. 选座区域容器 */
+/* 3. Seat Area Container */
 .seat-area {
   display: flex;
   flex-direction: column;
-  padding-top: 20px;
+  padding-top: 22px;
   width: 100%;
 }
 
-/* 机头屏幕指示条 */
+/* Screen Indicator */
 .screen {
-  background-color: #e0e0e0;
-  width: 60%; /* 稍微窄一点更像屏幕 */
+  background: linear-gradient(180deg, #cdd8e8, #dde4ef);
+  width: 60%;
   text-align: center;
-  padding: 5px;
-  border-radius: 0 0 20px 20px;
-  color: #999;
+  padding: 8px;
+  border-radius: 0 0 28px 28px;
+  color: #7a8da0;
   font-size: 12px;
   margin-bottom: 30px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   margin-left: auto;
   margin-right: auto;
+  letter-spacing: 3px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-/* 4. 核心：座位网格布局 */
-.seat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 15px; 
+/* Seat Legend */
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #ffffff, #fafbff);
+  border-radius: 14px;
+  margin-left: 16px;
+  margin-right: 16px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.legend-available {
+  background-color: #e6f7e6;
+  border-color: #91d5a0;
+}
+
+.legend-sold {
+  background-color: #f0f0f0;
+  border-color: #e0e0e0;
+}
+
+.legend-selected {
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(0, 82, 217, 0.3);
+}
+
+.available-count {
+  font-size: 11px;
+  color: #0052d9;
+  font-weight: 700;
+  background: linear-gradient(135deg, #e6f0ff, #d6e4ff);
+  padding: 3px 12px;
+  border-radius: 14px;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(0, 82, 217, 0.1);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.legend-text {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.legend-tag {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  line-height: 1.3;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.window-legend {
+  color: #0052d9;
+  background: linear-gradient(135deg, #e6f0ff, #d6e4ff);
+}
+
+.aisle-legend {
+  color: #52c41a;
+  background: linear-gradient(135deg, #f0fff0, #e6ffe6);
+}
+
+/* 4. Seat Grid Layout */
+.seat-grid-wrapper {
   width: 100%;
-  padding: 0 30px; 
+  padding: 0 16px;
   box-sizing: border-box;
+  position: relative;
+  transition: all 0.5s ease;
 }
 
-/* 5. 单个座位样式 */
-.seat-item {
-  width: 100%; 
-  /* 🔥 关键修改：高度改小，让它看起来像正方形 */
-  height: 55px; 
-  background-color: white;
-  border: 1px solid #ddd;
+/* 3D View Mode */
+.seat-grid-wrapper.view-3d {
+  perspective: 800px;
+  padding-top: 40px;
+}
+
+.seat-grid-wrapper.view-3d .seat-row {
+  transform: rotateX(5deg);
+  transform-origin: center top;
+  transition: transform 0.3s ease;
+}
+
+.seat-grid-wrapper.view-3d .seat-row:nth-child(2) {
+  transform: rotateX(8deg) scale(0.98);
+}
+
+.seat-grid-wrapper.view-3d .seat-row:nth-child(3) {
+  transform: rotateX(10deg) scale(0.96);
+}
+
+.seat-grid-wrapper.view-3d .seat-row:nth-child(n+4) {
+  transform: rotateX(12deg) scale(0.94);
+}
+
+.seat-grid-wrapper.view-3d .seat-item {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.seat-grid-wrapper.view-3d .seat-item.selected {
+  box-shadow: 0 8px 22px rgba(0, 82, 217, 0.5);
+  transform: translateY(-4px);
+}
+
+/* 3D View Toggle Button */
+.view-3d-toggle {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  z-index: 10;
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
+  color: white;
+  font-size: 12px;
+  padding: 7px 18px;
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(0, 82, 217, 0.4);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.view-3d-toggle:active {
+  background: linear-gradient(135deg, #003bb3, #3a6fd8);
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(0, 82, 217, 0.3);
+}
+
+/* 3D Cabin Walls */
+.cabin-wall-left,
+.cabin-wall-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.cabin-wall-left {
+  left: 5px;
+  background: linear-gradient(90deg, rgba(214, 228, 255, 0.7), transparent);
+}
+
+.cabin-wall-right {
+  right: 5px;
+  background: linear-gradient(270deg, rgba(214, 228, 255, 0.7), transparent);
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.row-label {
+  width: 30px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #aaa;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.row-label.row-active {
+  color: #0052d9;
+  background: linear-gradient(135deg, #e6f0ff, #f0f5ff);
   border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 82, 217, 0.1);
+}
+
+.seat-row-seats {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  align-items: center;
+}
+
+/* Aisle Separator */
+.seat-aisle {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+/* Column Labels */
+.seat-header-row {
+  margin-bottom: 8px;
+}
+
+.col-label {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #aaa;
+  font-weight: 700;
+  height: 22px;
+  line-height: 22px;
+}
+
+.seat-aisle-header {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+/* 5. Individual Seat Styles */
+.seat-item {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #e8fbe8, #e6f7e6);
+  border: 1.5px solid #91d5a0;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  color: #333;
-  transition: all 0.2s ease-in-out; 
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  font-weight: 700;
+  color: #2d6a2e;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* 座位号文字 */
+/* Window seat indicator dot */
+.seat-item.window-seat::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
+  opacity: 0.7;
+  box-shadow: 0 1px 3px rgba(0, 82, 217, 0.3);
+}
+
+/* Aisle seat dashed border */
+.seat-item.aisle-seat {
+  border-style: dashed;
+  border-color: #b7d9b0;
+  background: linear-gradient(135deg, #f2fbf2, #f0faf0);
+}
+
+/* Seat number text */
 .seat-item text:first-child {
-  font-size: 16px;
-  line-height: 1;
+  font-size: 14px;
+  line-height: 1.2;
 }
 
-/* 状态文字 (可选/已占) */
+/* Status text */
 .status-text {
   font-size: 10px;
   font-weight: normal;
   margin-top: 2px;
-  color: #999;
+  color: #7ab87a;
 }
 
-/* 6. 选中状态 */
+/* Seat type tags */
+.seat-type-tag {
+  font-size: 9px;
+  font-weight: normal;
+  margin-top: 1px;
+  padding: 0 5px;
+  border-radius: 6px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.window-tag {
+  color: #0052d9;
+  background-color: rgba(230, 240, 255, 0.8);
+}
+
+.aisle-tag {
+  color: #52c41a;
+  background-color: rgba(240, 255, 240, 0.8);
+}
+
+.seat-item.sold .seat-type-tag {
+  color: #d0d0d0;
+  background-color: transparent;
+}
+
+.seat-item.selected .seat-type-tag {
+  color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 6. Selected Seat */
 .seat-item.selected {
-  background-color: #0052d9;
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
   color: white;
-  border-color: #0052d9;
-  transform: scale(1.05); 
-  box-shadow: 0 4px 12px rgba(0, 82, 217, 0.3);
+  border-color: transparent;
+  transform: scale(1.08);
+  box-shadow: 0 8px 22px rgba(0, 82, 217, 0.45);
+  animation: seat-pulse 1.5s ease-in-out infinite;
 }
 
 .seat-item.selected .status-text {
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* 7. 已售状态 */
+.seat-item.selected.window-seat::before {
+  background-color: white;
+  opacity: 0.8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 7. Sold Seat */
 .seat-item.sold {
-  background-color: #f0f0f0;
-  color: #ccc;
-  border-color: #eee;
+  background: linear-gradient(135deg, #f0f0f0, #e8e8e8);
+  color: #c8c8c8;
+  border-color: #e5e5e5;
+  border-style: solid;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .seat-item.sold .status-text {
-  color: #ddd;
+  color: #d5d5d5;
 }
 
-/* 8. 底部操作栏 */
+/* 8. Footer Bar */
 .footer-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 80px; /* 加高一点，适配全面屏 */
-  background: white;
+  height: 88px;
+  background: linear-gradient(180deg, #ffffff, #fafbfc);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  padding-bottom: 10px; /* 适配 iPhone 底部横条 */
+  padding: 0 22px;
+  padding-bottom: 16px;
   box-sizing: border-box;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.05);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.08);
   z-index: 999;
+  border-top: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .selected-info {
   font-size: 16px;
   color: #333;
-  font-weight: bold;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  line-height: 1.4;
+}
+
+.footer-flight-no {
+  font-size: 12px;
+  color: #999;
+  font-weight: normal;
+  line-height: 1.3;
 }
 
 .btn-confirm {
-  background-color: #0052d9;
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
   color: white;
   margin: 0;
-  border-radius: 25px;
+  border-radius: 28px;
   font-size: 16px;
-  padding: 10px 30px;
-  font-weight: bold;
+  padding: 0 34px;
+  height: 48px;
+  line-height: 48px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 82, 217, 0.4);
+  letter-spacing: 1px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-confirm:active {
+  transform: scale(0.97);
+  box-shadow: 0 3px 10px rgba(0, 82, 217, 0.3);
 }
 
 .btn-confirm.disabled {
-  background-color: #e0e0e0;
+  background: linear-gradient(135deg, #e8e8e8, #d9d9d9);
+  color: #aaa;
+  box-shadow: none;
+}
+
+/* Full Seat Warning */
+.full-seat-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #fff2f0, #fff7f5);
+  border: 1px solid #ffccc7;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin: 0 16px 18px;
+  box-shadow: 0 3px 10px rgba(207, 19, 34, 0.08);
+}
+
+.full-seat-warning .warning-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.full-seat-warning .warning-text {
+  font-size: 14px;
+  color: #cf1322;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Skeleton Screen */
+.skeleton-seats {
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.skeleton-row-label {
+  width: 30px;
+  height: 14px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.skeleton-seat {
+  flex: 1;
+  height: 48px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 12px;
+  margin-right: 6px;
+}
+
+.skeleton-seat:last-child {
+  margin-right: 0;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes seat-pulse {
+  0%, 100% { box-shadow: 0 8px 22px rgba(0, 82, 217, 0.4); }
+  50% { box-shadow: 0 8px 28px rgba(0, 82, 217, 0.6); }
+}
+
+/* Selected Seat Info Card */
+.selected-seat-card {
+  position: fixed;
+  bottom: 108px;
+  left: 16px;
+  right: 16px;
+  background: linear-gradient(180deg, #ffffff, #fafbff);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.1), 0 2px 10px rgba(0, 0, 0, 0.04);
+  z-index: 998;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* Seat Tip Animation */
+.seat-tip-animation {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
+  color: white;
+  padding: 11px 24px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 999;
+  opacity: 0;
+  box-shadow: 0 6px 20px rgba(0, 82, 217, 0.4);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.tip-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tip-text {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.card-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 16px;
+  color: #ccc;
+  padding: 3px 8px;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.card-close:active {
   color: #999;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.card-label {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.4;
+}
+
+.card-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.seat-highlight {
+  color: #0052d9;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.price-highlight {
+  color: #e34d59;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+/* Price Zone Bar */
+.price-zone-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #ffffff, #fafbff);
+  border-radius: 14px;
+  margin-left: 16px;
+  margin-right: 16px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.price-zone-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zone-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.zone-front {
+  background: linear-gradient(135deg, #ffc53d, #faad14);
+}
+
+.zone-mid {
+  background: linear-gradient(135deg, #a8cfff, #69b1ff);
+}
+
+.zone-standard {
+  background-color: white;
+  border: 1.5px solid #d9d9d9;
+}
+
+.zone-label {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.window-addon {
+  color: #0052d9;
+  font-weight: 700;
+  font-size: 11px;
+  background: linear-gradient(135deg, #e6f0ff, #d6e4ff);
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 82, 217, 0.1);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+/* Seat Zone Styles */
+.seat-item.seat-front {
+  border-color: #ffd666;
+  background: linear-gradient(135deg, #fffbe6, #fff8dc);
+  color: #ad6800;
+}
+
+.seat-item.seat-mid {
+  border-color: #91caff;
+  background: linear-gradient(135deg, #f0f5ff, #e6f0ff);
+  color: #1d5cb8;
+}
+
+.seat-item.seat-front.selected {
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
+  border-color: transparent;
+  color: white;
+}
+
+.seat-item.seat-mid.selected {
+  background: linear-gradient(135deg, #0052d9, #4e83f7);
+  border-color: transparent;
+  color: white;
+}
+
+/* Footer Price Info */
+.footer-price-info {
+  font-size: 12px;
+  color: #e34d59;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Zone Tags */
+.zone-tag {
+  font-size: 12px;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.zone-front {
+  color: #ad6800;
+  background: linear-gradient(135deg, #fffbe6, #fff1b8);
+  border: 1px solid #ffe58f;
+}
+
+.zone-midfront {
+  color: #0052d9;
+  background: linear-gradient(135deg, #e6f0ff, #d6e4ff);
+  border: 1px solid #91caff;
+}
+
+.zone-standard {
+  color: #666;
+  background: linear-gradient(135deg, #f5f5f5, #fafafa);
+  border: 1px solid #eee;
+}
+
+/* Addon Highlight */
+.addon-highlight {
+  color: #faad14;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fffbe6, #fff7e6);
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* Price Total Row */
+.price-total-row {
+  border-top: 1.5px solid #e8e8e8;
+  padding-top: 12px;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #fff7f7, #fffbfb);
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* Companion Mode Section */
+.companion-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ffffff, #fafbfc);
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.companion-toggle {
+  font-size: 13px;
+  color: #888;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid #e0e0e0;
+  background: linear-gradient(135deg, #ffffff, #fafafa);
+  transition: all 0.25s ease;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.companion-toggle.companion-active {
+  color: #0052d9;
+  background: linear-gradient(135deg, #e6f0ff, #f0f5ff);
+  border-color: #91caff;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(0, 82, 217, 0.12);
+}
+
+.companion-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.companion-count-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5f5f5, #eeeeee);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #333;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.companion-count-btn:active {
+  background: linear-gradient(135deg, #e8e8e8, #e0e0e0);
+  transform: scale(0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.companion-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  min-width: 34px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.companion-seats-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 12px;
+  flex-wrap: wrap;
+}
+
+.companion-seats-label {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.companion-seat-tag {
+  font-size: 12px;
+  color: #0052d9;
+  background: linear-gradient(135deg, #e6f0ff, #f0f5ff);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid #b8d4ff;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+/* Smart Recommend Button */
+.recommend-btn {
+  font-size: 13px;
+  color: #722ed1;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid #d3adf7;
+  background: linear-gradient(135deg, #f9f0ff, #f5e8ff);
+  font-weight: 700;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.recommend-btn:active {
+  background: linear-gradient(135deg, #efdbff, #e4c8ff);
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.15);
+}
+
+/* Recommend Modal */
+.recommend-modal {
+  width: 85%;
+  background: linear-gradient(180deg, #ffffff, #fafbff);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.recommend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.recommend-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.3;
+}
+
+.recommend-close {
+  font-size: 24px;
+  color: #bbb;
+  padding: 5px;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.recommend-list {
+  padding: 14px 18px;
+}
+
+.recommend-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #f9f9f9, #f5f5f5);
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.25s ease;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.recommend-item:active {
+  background: linear-gradient(135deg, #f0f5ff, #e6f0ff);
+  border-color: #d6e4ff;
+  box-shadow: 0 2px 8px rgba(0, 82, 217, 0.1);
+}
+
+.recommend-rank {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.rank-1 {
+  background: linear-gradient(135deg, #ffc53d, #faad14);
+  color: white;
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #d9d9d9, #bfbfbf);
+  color: white;
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #e0a030, #d48806);
+  color: white;
+}
+
+.recommend-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.recommend-seat-no {
+  font-size: 17px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.3;
+}
+
+.recommend-reason {
+  font-size: 11px;
+  color: #999;
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+.recommend-score {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.score-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0052d9;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 11px;
+  color: #999;
+  line-height: 1;
+}
+
+.recommend-tip {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+  padding: 14px 18px 20px;
+  line-height: 1.4;
 }
